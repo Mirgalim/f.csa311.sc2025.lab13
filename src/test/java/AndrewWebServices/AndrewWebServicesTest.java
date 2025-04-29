@@ -12,37 +12,53 @@ public class AndrewWebServicesTest {
     PromoService promoService;
     AndrewWebServices andrewWebService;
 
+    boolean mailSent;
+
+    class StubRecSys extends RecSys {
+        @Override
+        public String getRecommendation(String accountName) {
+            return "The Matrix";
+        }
+    }
+
+    class MockPromoService extends PromoService {
+        @Override
+        public void mailTo(String email) {
+            mailSent = true;
+        }
+    }
+
     @Before
     public void setUp() {
-        // You need to use some mock objects here
-        database = new Database(); // We probably don't want to access our real database...
-        recommender = new RecSys();
-        promoService = new PromoService();
+        database = new InMemoryDatabase();
+        ((InMemoryDatabase) database).addAccount("Scotty", 17214);
+
+        recommender = new StubRecSys();
+        promoService = new MockPromoService();
+        mailSent = false;
 
         andrewWebService = new AndrewWebServices(database, recommender, promoService);
     }
 
     @Test
     public void testLogIn() {
-        // This is taking way too long to test
         assertTrue(andrewWebService.logIn("Scotty", 17214));
     }
 
     @Test
     public void testGetRecommendation() {
-        // This is taking way too long to test
-        assertEquals("Animal House", andrewWebService.getRecommendation("Scotty"));
+        assertEquals("The Matrix", andrewWebService.getRecommendation("Scotty"));
     }
 
     @Test
     public void testSendEmail() {
-        // How should we test sendEmail() when it doesn't have a return value?
-        // Hint: is there something from Mockito that seems useful here?
+        andrewWebService.sendPromoEmail("test@example.com");
+        assertTrue(mailSent);
     }
 
     @Test
     public void testNoSendEmail() {
-        // How should we test that no email has been sent in certain situations (like right after logging in)?
-        // Hint: is there something from Mockito that seems useful here?
+        andrewWebService.logIn("Scotty", 17214);
+        assertTrue(!mailSent);
     }
 }
